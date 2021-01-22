@@ -154,6 +154,38 @@ static void test_name_local_address_lookup(void)
 }
 
 /*============================================================================*
+ * API Test: Remote Address Lookup                                            *
+ *============================================================================*/
+
+/**
+ * @brief API Test: Remote Address Lookup
+ *
+ * @note This function does not realize a real remote resolution request.
+ * Instead, it forces the name client to communicate with the local name
+ * daemon to inquire it about the address of the target process.
+ */
+static void test_name_remote_address_lookup(void)
+{
+	int port_nr;
+	int test_ret;
+	char name[NANVIX_PROC_NAME_MAX];
+
+	port_nr = 0;
+	test_ret = -1;
+	ustrcpy(name, "cool-name");
+
+	TEST_ASSERT(nanvix_name_register(name, port_nr) == 0);
+
+	/* Disable local optimizations to ensure the use of explicit communication. */
+	_nanvix_name_disable_local_optimization();
+
+	TEST_ASSERT(nanvix_name_address_lookup(name, &test_ret) == knode_get_num());
+	TEST_ASSERT(test_ret == port_nr);
+
+	TEST_ASSERT(nanvix_name_unregister(name) == 0);
+}
+
+/*============================================================================*
  * API Test Driver Table                                                      *
  *============================================================================*/
 
@@ -161,11 +193,12 @@ static void test_name_local_address_lookup(void)
  * @brief Unit tests.
  */
 struct test tests_name_api[] = {
-	{ test_name_link_unlink,          "link unlink"         },
-	{ test_name_double_link,          "double link"         },
-	{ test_name_lookup,               "lookup"              },
-	{ test_name_heartbeat,            "heartbeat"           },
-	{ test_name_register_unregister,  "register unregister" },
-	{ test_name_local_address_lookup, "local addr lookup"   },
-	{ NULL,                            NULL                 }
+	{ test_name_link_unlink,           "link unlink"         },
+	{ test_name_double_link,           "double link"         },
+	{ test_name_lookup,                "lookup"              },
+	{ test_name_heartbeat,             "heartbeat"           },
+	{ test_name_register_unregister,   "register unregister" },
+	{ test_name_local_address_lookup,  "local addr lookup"   },
+	{ test_name_remote_address_lookup, "remote addr lookup"  },
+	{ NULL,                             NULL                 }
 };
