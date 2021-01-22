@@ -44,6 +44,14 @@
 	extern int __nanvix_name_setup(void);
 
 	/**
+	 * @brief Initializes the Name Service client daemon.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	extern int __nanvix_name_daemon_init(void);
+
+	/**
 	 * @brief Shuts down the Name Service client.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
@@ -141,5 +149,15 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	extern int nanvix_name_shutdown(void);
+
+	/**
+	 * @brief Disables for a single address_lookup the local node optimizations.
+	 *
+	 * @note IMPORTANT: This is a TEST ONLY routine and is intended exclusively
+	 * to carry on regression tests on the name snooper using a single cluster.
+	 * This function SHOULD NOT be called in another context that not the
+	 * aforementioned one.
+	 */
+	extern void _nanvix_name_disable_local_optimization(void);
 
 #endif /* NANVIX_RUNTIME_PM_NAME_H_ */

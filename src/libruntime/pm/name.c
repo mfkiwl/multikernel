@@ -35,10 +35,12 @@
 #include <posix/errno.h>
 #include <posix/stdbool.h>
 
+#define DEBUG 0
+
 /**
  * @brief ID of name snooper thread.
  */
-static kthread_t nanvix_name_snooper_tid;
+static kthread_t nanvix_name_snooper_tid = -1;
 
 /**
  * @brief Mailbox for small messages.
@@ -293,6 +295,24 @@ int nanvix_name_heartbeat(void)
  *============================================================================*/
 
 /**
+ * @brief Enable/Disable local node address lookups optimization.
+ *
+ * @note This static variable controls the address lookups optimization when
+ * a process is locally present. This is a test control variable and should
+ * always be 1, except when intentionally disabling it to evaluate the name
+ * snooper correctness in regression tests.
+ */
+PRIVATE int _local_node_optimization = 1;
+
+/**
+ * @todo TODO: provide a detailed description for this function.
+ */
+PUBLIC void _nanvix_name_disable_local_optimization(void)
+{
+	_local_node_optimization = 0;
+}
+
+/**
  * @todo TODO: provide a long description for this function.
  */
 PUBLIC int nanvix_name_address_lookup(const char *name, int *port)
@@ -321,7 +341,7 @@ PUBLIC int nanvix_name_address_lookup(const char *name, int *port)
 	nodenum = ret;
 
 	/* @p name is a local process. */
-	if (nodenum == knode_get_num())
+	if ((nodenum == knode_get_num()) && _local_node_optimization)
 	{
 		if ((*port = _local_address_lookup(name)) < 0)
 			ret = (-ENOENT);
@@ -329,13 +349,23 @@ PUBLIC int nanvix_name_address_lookup(const char *name, int *port)
 		return (ret);
 	}
 
+#if DEBUG
+	if ((nodenum == knode_get_num()) && !_local_node_optimization)
+		uprintf("[name][debug] Local address lookup made without optimization.");
+#endif
+
+	_local_node_optimization = 1;
+
 	/**
 	 * Resolves @p name address consulting the remote cluster associated.
 	 *
-	 * @note Since IOClusters currently does not support a local name daemon to
+	 * @note Since IOClusters does not support a local name daemon to
 	 * attend name resolution requests, this call may result in starvation for the
 	 * current thread. Make sure about the cluster associated with @p name is
 	 * a valid Compute Cluster.
+	 *
+	 * @todo Insert a security check to remove from the user the necessity of
+	 * ensure the remote clusternum.
 	 */
 
 	/* Opens an outbox to the remote name client. */
@@ -540,7 +570,9 @@ static void * nanvix_name_snooper(void *args)
 		/* Closes the opened outbox. */
 		uassert(kmailbox_close(outbox) == 0);
 
+#if DEBUG
 		uprintf("[nanvix][name] resolution requisition attended");
+#endif
 	}
 
 	return (NULL);
@@ -563,19 +595,25 @@ int __nanvix_name_setup(void)
 	if ((server = kmailbox_open(NAME_SERVER_NODE, NAME_SERVER_PORT_NUM)) < 0)
 		return (-1);
 
-	/**
-	 * Initializes the local name daemon.
-	 *
-	 * @note For now the daemon is only initialized in the Compute Clusters.
-	 * Create new threads in IO Clusters (Spawners) does not seem trivial and
-	 * need further information about the viability/necessity.
-	 *
-	 * @todo Discuss about this selective initialization.
-	 */
-	if (cluster_get_num() >= SPAWNERS_NUM)
-		uassert(kthread_create(&nanvix_name_snooper_tid, &nanvix_name_snooper, NULL) == 0);
-
 	initialized = true;
+
+	return (0);
+}
+
+/*============================================================================*
+ * __nanvix_name_daemon_init()                                                *
+ *============================================================================*/
+
+/**
+ * @todo TODO: provide a detailed description for this function.
+ */
+int __nanvix_name_daemon_init(void)
+{
+	/* Nothing to do. */
+	if (nanvix_name_snooper_tid >= 0)
+		return (0);
+
+	uassert(kthread_create(&nanvix_name_snooper_tid, &nanvix_name_snooper, NULL) == 0);
 
 	return (0);
 }
