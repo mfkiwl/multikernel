@@ -164,6 +164,7 @@ PRIVATE void _local_name_unregister(const char *name)
 int nanvix_name_lookup(const char *name)
 {
 	int ret;
+	int inbox;
 	struct name_message msg;
 
 	/* Initilize name client. */
@@ -181,7 +182,16 @@ int nanvix_name_lookup(const char *name)
 	if ((ret = kmailbox_write(server, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		return (ret);
 
-	if ((ret = kmailbox_read(stdinbox_get(), &msg, sizeof(struct name_message))) != sizeof(struct name_message))
+	inbox = stdinbox_get();
+
+	/**
+	 * @brief Sets the stdinbox remote to receive exclusively from the Name Server outbox.
+	 *
+	 * @todo Get further information about the necessity of a stronger message selection.
+	 */
+	uassert(kmailbox_set_remote(inbox, NAME_SERVER_NODE, MAILBOX_ANY_PORT) == 0);
+
+	if ((ret = kmailbox_read(inbox, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		return (ret);
 
 	return (msg.op.ret.nodenum);
@@ -197,6 +207,7 @@ int nanvix_name_lookup(const char *name)
 int nanvix_name_link(int nodenum, const char *name)
 {
 	int ret;
+	int inbox;
 	struct name_message msg;
 
 	/* Initilize name client. */
@@ -218,7 +229,16 @@ int nanvix_name_link(int nodenum, const char *name)
 	if ((ret = kmailbox_write(server, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		return (ret);
 
-	if ((ret = kmailbox_read(stdinbox_get(), &msg, sizeof(struct name_message))) != sizeof(struct name_message))
+	inbox = stdinbox_get();
+
+	/**
+	 * @brief Sets the stdinbox remote to receive exclusively from the Name Server outbox.
+	 *
+	 * @todo Get further information about the necessity of a stronger message selection.
+	 */
+	uassert(kmailbox_set_remote(inbox, NAME_SERVER_NODE, MAILBOX_ANY_PORT) == 0);
+
+	if ((ret = kmailbox_read(inbox, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		return (ret);
 
 	if (msg.header.opcode == NAME_SUCCESS)
@@ -237,6 +257,7 @@ int nanvix_name_link(int nodenum, const char *name)
 int nanvix_name_unlink(const char *name)
 {
 	int ret;
+	int inbox;
 	struct name_message msg;
 
 	/* Initilize name client. */
@@ -254,7 +275,16 @@ int nanvix_name_unlink(const char *name)
 	if ((ret = kmailbox_write(server, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		return (ret);
 
-	if ((ret = kmailbox_read(stdinbox_get(), &msg, sizeof(struct name_message))) != sizeof(struct name_message))
+	inbox = stdinbox_get();
+
+	/**
+	 * @brief Sets the stdinbox remote to receive exclusively from the Name Server outbox.
+	 *
+	 * @todo Get further information about the necessity of a stronger message selection.
+	 */
+	uassert(kmailbox_set_remote(inbox, NAME_SERVER_NODE, MAILBOX_ANY_PORT) == 0);
+
+	if ((ret = kmailbox_read(inbox, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		return (ret);
 
 	if (msg.header.opcode == NAME_SUCCESS)
@@ -318,6 +348,7 @@ PUBLIC void _nanvix_name_disable_local_optimization(void)
 PUBLIC int nanvix_name_address_lookup(const char *name, int *port)
 {
 	int ret; /* Function return and remote_node during routine execution. */
+	int inbox;
 	int nodenum;
 	int outbox;
 	struct name_message msg;
@@ -379,7 +410,16 @@ PUBLIC int nanvix_name_address_lookup(const char *name, int *port)
 	if ((ret = kmailbox_write(outbox, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		goto end;
 
-	if ((ret = kmailbox_read(stdinbox_get(), &msg, sizeof(struct name_message))) != sizeof(struct name_message))
+	inbox = stdinbox_get();
+
+	/**
+	 * @brief Sets the stdinbox remote to receive exclusively from the Name Server outbox.
+	 *
+	 * @todo Get further information about the necessity of a stronger message selection.
+	 */
+	uassert(kmailbox_set_remote(inbox, nodenum, MAILBOX_ANY_PORT) == 0);
+
+	if ((ret = kmailbox_read(inbox, &msg, sizeof(struct name_message))) != sizeof(struct name_message))
 		goto end;
 
 	/* Retrieves the port number returned by the remote client. */
