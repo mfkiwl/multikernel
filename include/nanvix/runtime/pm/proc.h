@@ -22,39 +22,66 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_RUNTIME_PM_H_
-#define NANVIX_RUNTIME_PM_H_
 
-	/* Must come first. */
-	#define __NEED_NAME_SERVICE
-	#define __NEED_MAILBOX_SERVICE
-	#define __NEED_PORTAL_SERVICE
-	#define __NEED_SYSV_SERVICE
-	#define __NEED_LIMITS_PM
+#ifndef NANVIX_RUNTIME_PM_PROC_H_
+#define NANVIX_RUNTIME_PM_PROC_H_
 
-	#include <nanvix/runtime/stdikc.h>
-	#include <nanvix/runtime/pm/name.h>
-	#include <nanvix/runtime/pm/mailbox.h>
-	#include <nanvix/runtime/pm/portal.h>
-	#include <nanvix/runtime/pm/sysv.h>
-	#include <nanvix/runtime/pm/proc.h>
-	#include <nanvix/limits/pm.h>
+	#define PROC_TABLE_LENGHT 64
+	#define GROUP_TABLE_LENGHT 64
 
-	/**
-	 * @brief Gets the name of the process.
-	 *
-	 * @returns The name of the calling process.
+	/*
+	 * @brief Process group
 	 */
-	extern const char *nanvix_getpname(void);
+	struct group
+	{
+		pid_t gid;
+	};
+
+	/*
+	 * @brief Process
+	 */
+	struct proc
+	{
+		pid_t pid;
+		struct group group;
+	};
 
 	/**
-	 * @brief Sets the name of the process.
+	 * @brief Initializes processes table
+	 */
+	extern void proc_table_init(void);
+
+	/**
+	 * @brief Initializes process groups table
+	 */
+	extern void group_table_init(void);
+
+	/**
+	 * @brief Processes table
+	 * Temporary function
+	 */
+	extern void nanvix_setpid(pid_t pid);
+
+	/**
+	 * @brief Returns process id
+	 */
+	extern pid_t nanvix_getpid(void);
+
+	/**
+	 * @brief Returns process group id
+	 */
+	extern pid_t nanvix_getpgid(pid_t pid);
+
+	/**
+	 * @brief Sets a process group id
 	 *
-	 * @param pname Process name.
+	 * @param pid Target process id. If pid equals zero, the calling process id is used
+	 * @param pgid Target process group id. If pid equals zero, a new group is
+	 * created
 	 *
-	 * @returns Upon successful completion, zero is returned. Upon
+	 * @return Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	extern int nanvix_setpname(const char *pname);
+	extern int nanvix_setpgid(pid_t pid, pid_t pgid);
 
-#endif /* NANVIX_RUNTIME_PM_H_ */
+#endif /* NANVIX_RUNTIME_PM_PROC_H_ */

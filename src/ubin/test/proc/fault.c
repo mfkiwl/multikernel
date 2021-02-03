@@ -22,39 +22,32 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_RUNTIME_PM_H_
-#define NANVIX_RUNTIME_PM_H_
+#include <nanvix/runtime/pm.h>
+#include "../test.h"
 
-	/* Must come first. */
-	#define __NEED_NAME_SERVICE
-	#define __NEED_MAILBOX_SERVICE
-	#define __NEED_PORTAL_SERVICE
-	#define __NEED_SYSV_SERVICE
-	#define __NEED_LIMITS_PM
+/**
+ * @brief Fault test: invalid pid.
+ */
+static void test_setpgid_invalid_pid(void)
+{
+	uassert(nanvix_setpgid(10, 0) < 0);
+	uassert(nanvix_setpgid(10, 10) < 0);
+	uassert(nanvix_setpgid(10, 2) < 0);
+}
+/**
+ * @brief Fault test: invalid group id.
+ */
+static void test_setpgid_invalid_group(void)
+{
+	uassert(nanvix_setpgid(0, -1) < 0);
+	uassert(nanvix_setpgid(0, 10) < 0);
+}
 
-	#include <nanvix/runtime/stdikc.h>
-	#include <nanvix/runtime/pm/name.h>
-	#include <nanvix/runtime/pm/mailbox.h>
-	#include <nanvix/runtime/pm/portal.h>
-	#include <nanvix/runtime/pm/sysv.h>
-	#include <nanvix/runtime/pm/proc.h>
-	#include <nanvix/limits/pm.h>
-
-	/**
-	 * @brief Gets the name of the process.
-	 *
-	 * @returns The name of the calling process.
-	 */
-	extern const char *nanvix_getpname(void);
-
-	/**
-	 * @brief Sets the name of the process.
-	 *
-	 * @param pname Process name.
-	 *
-	 * @returns Upon successful completion, zero is returned. Upon
-	 * failure, a negative error code is returned instead.
-	 */
-	extern int nanvix_setpname(const char *pname);
-
-#endif /* NANVIX_RUNTIME_PM_H_ */
+/**
+ * @brief Unit tests.
+ */
+struct test tests_proc_fault[] = {
+	{ test_setpgid_invalid_pid,          "invalid pid"      },
+	{ test_setpgid_invalid_group,        "invalid group"    },
+	{ NULL,                   NULL            }
+};
